@@ -1,0 +1,8 @@
+Drug classification model evaluation
+Rows used: 200
+Train rows: 150
+Test rows: 50
+Accuracy: 1.0000
+Macro F1: 1.0000
+Features: Age, Sex, BP, Cholesterol, Na_to_K
+Target classes: DrugY, drugA, drugB, drugC, drugX

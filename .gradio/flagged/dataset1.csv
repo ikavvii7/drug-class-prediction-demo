@@ -1,0 +1,4 @@
+Age,Sex,BP,Cholesterol,Na_to_K,output,timestamp
+40,F,LOW,NORMAL,15,"Predicted class: **DrugY**
+
+Educational demo only—not medical advice.",2026-10-21 09:10:36.981379

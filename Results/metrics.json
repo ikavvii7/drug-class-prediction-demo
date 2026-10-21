@@ -1,0 +1,21 @@
+{
+  "rows": 200,
+  "train_rows": 150,
+  "test_rows": 50,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "features": [
+    "Age",
+    "Sex",
+    "BP",
+    "Cholesterol",
+    "Na_to_K"
+  ],
+  "classes": [
+    "DrugY",
+    "drugA",
+    "drugB",
+    "drugC",
+    "drugX"
+  ]
+}

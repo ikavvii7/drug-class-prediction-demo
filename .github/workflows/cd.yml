@@ -1,0 +1,59 @@
+name: Deploy ML app to Hugging Face Spaces
+
+on:
+  workflow_run:
+    workflows: ["ML CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download model artifacts from successful CI run
+        uses: actions/download-artifact@v4
+        with:
+          name: ml-model-and-results
+          path: generated
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble Space directory
+        run: |
+          mkdir -p App/Model App/Results
+          cp generated/Model/drug_pipeline.skops App/Model/
+          cp generated/Results/metrics.txt App/Results/
+          cp generated/Results/metrics.json App/Results/
+          cp generated/Results/model_results.png App/Results/
+          cp App/requirements.txt App/requirements.txt
+
+      - name: Deploy app, model and metrics
+        env:
+          HF_TOKEN: ${{ secrets.HF }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+        run: |
+          test -n "$HF_TOKEN" || (echo "Missing repository secret HF" && exit 1)
+          test -n "$HF_SPACE_ID" || (echo "Missing repository variable HF_SPACE_ID (username/space-name)" && exit 1)
+          python -m pip install --upgrade huggingface_hub
+          hf auth login --token "$HF_TOKEN"
+          cp App/README.md App/README.md
+          cp App/drug_app.py App/drug_app.py
+          cp App/requirements.txt App/requirements.txt
+          cp App/Model/drug_pipeline.skops App/drug_pipeline.skops
+          cp -r App/Results App/Results
+          hf upload "$HF_SPACE_ID" App . --repo-type=space --commit-message="Deploy model from successful CI"

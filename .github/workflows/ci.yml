@@ -1,0 +1,81 @@
+name: ML CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "train.py"
+      - "tests/**"
+      - "Data/**"
+      - "requirements.txt"
+      - "Makefile"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  train-test-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Format Python files
+        run: black train.py tests
+
+      - name: Run tests
+        run: make test
+
+      - name: Train and evaluate
+        run: make train
+
+      - name: Build metrics report
+        run: |
+          {
+            echo "# ML Training Report"
+            echo
+            cat Results/metrics.txt
+            echo
+            echo "## Confusion Matrix"
+            echo
+            echo "![Confusion matrix](Results/model_results.png)"
+          } > report.md
+
+      - name: Set up CML
+        if: github.event_name == 'pull_request'
+        uses: iterative/setup-cml@v2
+        with:
+          version: "latest"
+          vega: false
+
+      - name: Publish CML pull request report
+        if: github.event_name == 'pull_request'
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cml comment create report.md
+
+      - name: Upload trained artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-model-and-results
+          path: |
+            Model/drug_pipeline.skops
+            Results/metrics.txt
+            Results/metrics.json
+            Results/model_results.png
+          if-no-files-found: error
+          retention-days: 14
