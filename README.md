@@ -34,3 +34,9 @@ This is a learning project, not a medical tool. The demo dataset is small and mo
 performance must not be interpreted as clinical evidence.
 
 - Assignment presentation for the DevOps course.
+
+## CI/CD validation
+
+This project automatically trains and evaluates its scikit-learn model
+using GitHub Actions. Model metrics and confusion matrix outputs are
+generated during each CI run.
