@@ -2,13 +2,19 @@ from pathlib import Path
 import json
 import pandas as pd
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import accuracy_score, f1_score, ConfusionMatrixDisplay, confusion_matrix
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    ConfusionMatrixDisplay,
+    confusion_matrix,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
@@ -20,6 +26,7 @@ MODEL_DIR = ROOT / "Model"
 RESULTS_DIR = ROOT / "Results"
 TARGET = "Drug"
 
+
 def main():
     if not DATA_PATH.exists():
         raise FileNotFoundError(
@@ -29,7 +36,9 @@ def main():
 
     df = pd.read_csv(DATA_PATH)
     if TARGET not in df.columns:
-        raise ValueError(f"Expected target column '{TARGET}'. Found columns: {list(df.columns)}")
+        raise ValueError(
+            f"Expected target column '{TARGET}'. Found columns: {list(df.columns)}"
+        )
     if len(df) < 10:
         raise ValueError("Dataset is too small; provide at least 10 rows.")
 
@@ -37,30 +46,46 @@ def main():
     X = df.drop(columns=[TARGET])
     y = df[TARGET].astype(str)
 
-    categorical = X.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+    categorical = X.select_dtypes(
+        include=["object", "category", "bool"]
+    ).columns.tolist()
     numeric = X.select_dtypes(include=["number"]).columns.tolist()
     if not numeric and not categorical:
         raise ValueError("No usable numeric or categorical feature columns were found.")
 
-    numeric_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler()),
-    ])
-    categorical_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent")),
-        ("encoder", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
-    ])
-    preprocessor = ColumnTransformer([
-        ("numeric", numeric_pipe, numeric),
-        ("categorical", categorical_pipe, categorical),
-    ])
+    numeric_pipe = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
+    categorical_pipe = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            (
+                "encoder",
+                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+            ),
+        ]
+    )
+    preprocessor = ColumnTransformer(
+        [
+            ("numeric", numeric_pipe, numeric),
+            ("categorical", categorical_pipe, categorical),
+        ]
+    )
 
-    pipe = Pipeline([
-        ("preprocessor", preprocessor),
-        ("classifier", RandomForestClassifier(
-            n_estimators=250, random_state=42, class_weight="balanced"
-        )),
-    ])
+    pipe = Pipeline(
+        [
+            ("preprocessor", preprocessor),
+            (
+                "classifier",
+                RandomForestClassifier(
+                    n_estimators=250, random_state=42, class_weight="balanced"
+                ),
+            ),
+        ]
+    )
 
     # Stratification is helpful for this dataset, but tiny classes may make it impossible.
     stratify = y if y.value_counts().min() >= 2 else None
@@ -88,15 +113,21 @@ def main():
         f"Target classes: {', '.join(sorted(y.unique()))}\n"
     )
     (RESULTS_DIR / "metrics.txt").write_text(metrics, encoding="utf-8")
-    (RESULTS_DIR / "metrics.json").write_text(json.dumps({
-        "rows": int(len(df)),
-        "train_rows": int(len(X_train)),
-        "test_rows": int(len(X_test)),
-        "accuracy": float(accuracy),
-        "macro_f1": float(macro_f1),
-        "features": list(X.columns),
-        "classes": sorted(y.unique()),
-    }, indent=2), encoding="utf-8")
+    (RESULTS_DIR / "metrics.json").write_text(
+        json.dumps(
+            {
+                "rows": int(len(df)),
+                "train_rows": int(len(X_train)),
+                "test_rows": int(len(X_test)),
+                "accuracy": float(accuracy),
+                "macro_f1": float(macro_f1),
+                "features": list(X.columns),
+                "classes": sorted(y.unique()),
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     labels = sorted(y.unique())
     cm = confusion_matrix(y_test, predictions, labels=labels)
@@ -112,6 +143,7 @@ def main():
     print(metrics)
     print(f"Saved model: {MODEL_DIR / 'drug_pipeline.skops'}")
     print(f"Saved plot: {RESULTS_DIR / 'model_results.png'}")
+
 
 if __name__ == "__main__":
     main()
