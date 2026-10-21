@@ -32,3 +32,5 @@ python App/drug_app.py
 
 This is a learning project, not a medical tool. The demo dataset is small and model
 performance must not be interpreted as clinical evidence.
+
+- Assignment presentation for the DevOps course.
