@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "README.md"
       - "train.py"
       - "tests/**"
       - "Data/**"
@@ -12,6 +13,8 @@ on:
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "README.md"
 
 permissions:
   contents: read
