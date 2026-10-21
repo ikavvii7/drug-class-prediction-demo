@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import gradio as gr
 import skops.io as sio
+import os
 
 ROOT = Path(__file__).resolve().parent
 MODEL_CANDIDATES = [
@@ -67,4 +68,7 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", "7860")),
+    )
